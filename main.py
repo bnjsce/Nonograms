@@ -38,10 +38,11 @@ def setup():
 	# creating and assigning cells to grid
 	for i in range(int(GRID_SIZE.x)):
 		for j in range(int(GRID_SIZE.y)):
-			rng = random.randint(1, 2)
+			rng = random.randint(1, 100)
 			completion_state = None
 			# 1 = empty, 2 = filled, 3 = cross
-			if rng == 1:
+			# slight bias towards placing a filled cell
+			if rng > 62:
 				completion_state = 3
 			else:
 				completion_state = 2

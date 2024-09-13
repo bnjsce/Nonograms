@@ -1,6 +1,8 @@
+from datetime import datetime
 import pygame as pg
-import random
 import sys, os
+import random
+import math
 
 from Cell import *
 
@@ -11,9 +13,16 @@ C_BACKGROUND = "#343742"
 C_GRID_BOUNDARIES = "#72778c"
 C_CROSS_CELL = "#b52450"
 
+# 10x10 = cell size 60, grid padding 100; 15x15 = cell size 45, grid padding 175
 GRID_SIZE = pg.Vector2(10, 10)
-CELL_SIZE = 60
-GRID_PADDING = 100
+CELL_SIZE = 0
+GRID_PADDING = 0
+if GRID_SIZE.x == 10:
+	CELL_SIZE = 60
+	GRID_PADDING = 100
+elif GRID_SIZE.x == 15:
+	CELL_SIZE = 45
+	GRID_PADDING = 175
 WIDTH = (CELL_SIZE * GRID_SIZE.x) + (2 * GRID_PADDING)
 HEIGHT = (CELL_SIZE * GRID_SIZE.y) + (2 * GRID_PADDING)
 
@@ -27,14 +36,14 @@ cells = []
 x_solutions = []
 y_solutions = []
 
-def get_cell_clicked(pos):
+def get_cell_clicked(pos) -> Cell:
 	for cell in cells:
 		cell_start = pg.Vector2(cell.grid_pos.x * CELL_SIZE + GRID_PADDING, cell.grid_pos.y * CELL_SIZE + GRID_PADDING)
 		cell_end = pg.Vector2(cell.grid_pos.x * CELL_SIZE + GRID_PADDING + CELL_SIZE, cell.grid_pos.y * CELL_SIZE + GRID_PADDING + CELL_SIZE)
 		if pos[0] >= cell_start.x and pos[0] < cell_end.x and pos[1] >= cell_start.y and pos[1] < cell_end.y:
 			return cell
 
-def setup():
+def setup() -> None:
 	# creating and assigning cells to grid
 	for i in range(int(GRID_SIZE.x)):
 		for j in range(int(GRID_SIZE.y)):
@@ -84,8 +93,24 @@ def setup():
 
 	game_loop(True, target_filled)
 
-def win_screen(running):
+def win_screen(running, st) -> None:
 	clock = pg.time.Clock()
+	start_time = st
+	end_time = f"{datetime.now():%X}"
+	times = []
+	times.append(start_time.split(":"))
+	times.append(end_time.split(":"))
+
+	for i in range(len(times[0])):
+		print(times[0][i], times[1][i])
+
+	h = abs(int(times[1][0]) - int(times[0][0])) * 3600
+	m = abs(int(times[1][1]) - int(times[0][1])) * 60
+	s = abs(int(times[1][2]) - int(times[0][2])) + h + m
+	print(h, m, s)
+	total_mins = math.floor(s / 60)
+	total_secs = s % 60
+
 	while running:
 		for event in pg.event.get():
 			if event.type == pg.QUIT:
@@ -94,19 +119,25 @@ def win_screen(running):
 		screen.fill(C_BACKGROUND)
 
 		font = pg.font.Font("freesansbold.ttf", 34)
+		time_font = pg.font.Font("freesansbold.ttf", 22)
 		text = font.render(f"You win!", True, "white")
+		time_text = font.render(f"{total_mins}m{total_secs}s", True, "white")
 		text_rect = text.get_rect()
+		time_rect = time_text.get_rect()
 		text_rect.center = (screen.get_width() / 2, screen.get_height() / 2 - text_rect.h / 2)
+		time_rect.center = (screen.get_width() / 2, screen.get_height() / 2 - time_rect.h / 2 + GRID_PADDING)
 		screen.blit(text, text_rect)
+		screen.blit(time_text, time_rect)
 
 		# RENDER/UPDATE
 		pg.display.update()
 		pg.display.flip()
 		clock.tick(144)
 
-def game_loop(running, tf):
+def game_loop(running, tf) -> None:
 	target_filled = tf
 	clock = pg.time.Clock()
+	start_time = f"{datetime.now():%X}"
 	while running:
 		for event in pg.event.get():
 			if event.type == pg.QUIT:
@@ -115,14 +146,15 @@ def game_loop(running, tf):
 				# check left mouse button is pressed
 				if event.button == 1:
 					pos = pg.mouse.get_pos()
-					cell = get_cell_clicked(pos)
-					if cell.curr_state == 1:
-						cell.curr_state = 2
-					elif cell.curr_state == 2:
-						cell.curr_state = 3
-					elif cell.curr_state == 3:
-						cell.curr_state = 1
-					cell.change_colour()
+					if pos[0] >= GRID_PADDING and pos[0] < screen.get_width() - GRID_PADDING and pos[1] >= GRID_PADDING and pos[1] < screen.get_height() - GRID_PADDING:
+						cell = get_cell_clicked(pos)
+						if cell.curr_state == 1:
+							cell.curr_state = 2
+						elif cell.curr_state == 2:
+							cell.curr_state = 3
+						elif cell.curr_state == 3:
+							cell.curr_state = 1
+						cell.change_colour()
 
 		screen.fill(C_BACKGROUND)
 
@@ -151,9 +183,9 @@ def game_loop(running, tf):
 				font = pg.font.Font("freesansbold.ttf", 18)
 				text = font.render(f"{target}", True, "white")
 				text_rect = text.get_rect()
-				text_rect.center = (GRID_PADDING + y * CELL_SIZE + (CELL_SIZE / 2) - (text_rect.w / 2), GRID_PADDING * 0.15 + spacing)
+				text_rect.center = (GRID_PADDING + y * CELL_SIZE + (CELL_SIZE / 2), GRID_PADDING * 0.15 + spacing)
 				screen.blit(text, text_rect)
-				spacing += GRID_PADDING / 5
+				spacing += 23
 
 		# draw grid overlay
 		for i in range(int(GRID_SIZE.x) + 1):
@@ -173,7 +205,7 @@ def game_loop(running, tf):
 			if cell.comp_state == 2 and cell.curr_state == 2:
 				target_check += 1
 		if target_check == target_filled:
-			win_screen(True)
+			win_screen(True, start_time)
 			running = False
 
 		# RENDER/UPDATE

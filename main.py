@@ -101,13 +101,9 @@ def win_screen(running, st) -> None:
 	times.append(start_time.split(":"))
 	times.append(end_time.split(":"))
 
-	for i in range(len(times[0])):
-		print(times[0][i], times[1][i])
-
 	h = abs(int(times[1][0]) - int(times[0][0])) * 3600
 	m = abs(int(times[1][1]) - int(times[0][1])) * 60
 	s = abs(int(times[1][2]) - int(times[0][2])) + h + m
-	print(h, m, s)
 	total_mins = math.floor(s / 60)
 	total_secs = s % 60
 

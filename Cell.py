@@ -6,7 +6,7 @@ class Cell:
 		self.grid_pos = grid_position
 		self.curr_state = 1
 		self.comp_state = completion_state
-		self.colour = C_EMPTY_CELL
+		self.colour = C_EMPTY_CELL # empty by default
 
 	def change_colour(self):
 		if self.curr_state == 1:
@@ -14,4 +14,4 @@ class Cell:
 		elif self.curr_state == 2:
 			self.colour = C_FILLED_CELL
 		else:
-			self.colour = C_EMPTY_CELL
+			self.colour = C_EMPTY_CELL # white background for cross to be added on top

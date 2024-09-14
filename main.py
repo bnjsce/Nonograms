@@ -1,11 +1,14 @@
+# libraries
 from datetime import datetime
 import pygame as pg
 import sys, os
 import random
 import math
 
+# classes
 from Cell import *
 
+# clear PyGame splash screen
 os.system("cls" if os.name=="nt" else "clear")
 print("Nonograms | Ben Collingridge")
 
@@ -26,6 +29,7 @@ elif GRID_SIZE.x == 15:
 WIDTH = (CELL_SIZE * GRID_SIZE.x) + (2 * GRID_PADDING)
 HEIGHT = (CELL_SIZE * GRID_SIZE.y) + (2 * GRID_PADDING)
 
+# setup window
 pg.init()
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("Nonograms | Ben Collingridge")
@@ -36,6 +40,7 @@ cells = []
 x_solutions = []
 y_solutions = []
 
+# find cell clicked in relativity to mouse position (returns the cell object)
 def get_cell_clicked(pos) -> Cell:
 	for cell in cells:
 		cell_start = pg.Vector2(cell.grid_pos.x * CELL_SIZE + GRID_PADDING, cell.grid_pos.y * CELL_SIZE + GRID_PADDING)
@@ -58,13 +63,14 @@ def setup() -> None:
 			cell = Cell(pg.Vector2(j, i), completion_state)
 			cells.append(cell)
 
-	# counting rows
+	# counting rows for solutions
 	for y in range(int(GRID_SIZE.y)):
 		temp = []
 		count = 0
 		for x in range(int(GRID_SIZE.x)):
 			if cells[y * int(GRID_SIZE.y) + x].comp_state == 2:
 				count += 1
+				# handling if the last cell in the row is of state 2 (doesn't append to solutions otherwise)
 				if x == int(GRID_SIZE.y) - 1 and count > 0:
 					temp.append(str(count))
 			elif cells[y * int(GRID_SIZE.y) + x].comp_state == 3 and count > 0:
@@ -72,13 +78,14 @@ def setup() -> None:
 				count = 0
 		x_solutions.append(temp)
 
-	# counting columns
+	# counting columns for solutions
 	for x in range(int(GRID_SIZE.x)):
 		temp = []
 		count = 0
 		for y in range(int(GRID_SIZE.y)):
 			if cells[y * int(GRID_SIZE.y) + x].comp_state == 2:
 				count += 1
+				# handling if the last cell in the column is of state 2 (doesn't append to solutions otherwise)
 				if y == int(GRID_SIZE.y) - 1 and count > 0:
 					temp.append(str(count))
 			elif cells[y * int(GRID_SIZE.y) + x].comp_state == 3 and count > 0:
@@ -86,6 +93,7 @@ def setup() -> None:
 				count = 0
 		y_solutions.append(temp)
 
+	# setting goal so that player can win the game (all cells which should be filled; ignoring all cells which should be crossed)
 	target_filled = 0
 	for cell in cells:
 		if cell.comp_state == 2:
@@ -93,19 +101,21 @@ def setup() -> None:
 
 	game_loop(True, target_filled)
 
+# win screen called when player wins and takes the start time with it
 def win_screen(running, st) -> None:
 	clock = pg.time.Clock()
 	start_time = st
-	end_time = f"{datetime.now():%X}"
+	end_time = f"{datetime.now():%X}" # end time converted to string
 	times = []
+	# append hours, minutes, seconds as list to the times list (now 2D array)
 	times.append(start_time.split(":"))
 	times.append(end_time.split(":"))
 
-	h = abs(int(times[1][0]) - int(times[0][0])) * 3600
-	m = abs(int(times[1][1]) - int(times[0][1])) * 60
-	s = abs(int(times[1][2]) - int(times[0][2])) + h + m
-	total_mins = math.floor(s / 60)
-	total_secs = s % 60
+	h = abs(int(times[1][0]) - int(times[0][0])) * 3600 # hours to seconds
+	m = abs(int(times[1][1]) - int(times[0][1])) * 60 # minutes to seconds
+	s = abs(int(times[1][2]) - int(times[0][2])) + h + m # total seconds including the hours and minutes converted
+	total_mins = math.floor(s / 60) # round down the minutes in order to get the seconds as a whole number instead of a fraction
+	total_secs = s % 60 # MOD for whole seconds instead of decimal
 
 	while running:
 		for event in pg.event.get():
@@ -120,8 +130,8 @@ def win_screen(running, st) -> None:
 		time_text = font.render(f"{total_mins}m{total_secs}s", True, "white")
 		text_rect = text.get_rect()
 		time_rect = time_text.get_rect()
-		text_rect.center = (screen.get_width() / 2, screen.get_height() / 2 - text_rect.h / 2)
-		time_rect.center = (screen.get_width() / 2, screen.get_height() / 2 - time_rect.h / 2 + GRID_PADDING)
+		text_rect.center = (screen.get_width() / 2, screen.get_height() / 2 - text_rect.h / 2) # you win text
+		time_rect.center = (screen.get_width() / 2, screen.get_height() / 2 - time_rect.h / 2 + GRID_PADDING) # time to complete text
 		screen.blit(text, text_rect)
 		screen.blit(time_text, time_rect)
 
@@ -131,9 +141,9 @@ def win_screen(running, st) -> None:
 		clock.tick(144)
 
 def game_loop(running, tf) -> None:
-	target_filled = tf
+	target_filled = tf # win condition
 	clock = pg.time.Clock()
-	start_time = f"{datetime.now():%X}"
+	start_time = f"{datetime.now():%X}" # start time converted to string
 	while running:
 		for event in pg.event.get():
 			if event.type == pg.QUIT:
@@ -142,14 +152,15 @@ def game_loop(running, tf) -> None:
 				# check left mouse button is pressed
 				if event.button == 1:
 					pos = pg.mouse.get_pos()
+					# check that mouse is inside grid when clicked (throws NoneType object error otherwise)
 					if pos[0] >= GRID_PADDING and pos[0] < screen.get_width() - GRID_PADDING and pos[1] >= GRID_PADDING and pos[1] < screen.get_height() - GRID_PADDING:
 						cell = get_cell_clicked(pos)
 						if cell.curr_state == 1:
-							cell.curr_state = 2
+							cell.curr_state = 2 # empty -> filled
 						elif cell.curr_state == 2:
-							cell.curr_state = 3
+							cell.curr_state = 3 # filled -> cross
 						elif cell.curr_state == 3:
-							cell.curr_state = 1
+							cell.curr_state = 1 # cross -> empty
 						cell.change_colour()
 
 		screen.fill(C_BACKGROUND)
@@ -175,6 +186,7 @@ def game_loop(running, tf) -> None:
 			screen.blit(text, text_rect)
 		for y in range(len(y_solutions)):
 			spacing = 0
+			# put each sublist on new line ("\n" doesn't work for font render)
 			for target in y_solutions[y]:
 				font = pg.font.Font("freesansbold.ttf", 18)
 				text = font.render(f"{target}", True, "white")
@@ -185,6 +197,7 @@ def game_loop(running, tf) -> None:
 
 		# draw grid overlay
 		for i in range(int(GRID_SIZE.x) + 1):
+			# bold line if the 5th line, 10th line, etc
 			if i % 5 == 0:
 				pg.draw.line(screen, C_GRID_BOUNDARIES, pg.Vector2(CELL_SIZE * i + GRID_PADDING, GRID_PADDING), pg.Vector2(CELL_SIZE * i + GRID_PADDING, screen.get_height() - GRID_PADDING), 5)
 			else:
